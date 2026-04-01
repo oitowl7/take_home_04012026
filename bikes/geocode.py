@@ -43,7 +43,7 @@ def reverse_geocode(
         return geocode_cache[key]
 
     params = {"lat": lat, "lon": lon, "format": "jsonv2", "zoom": 18}
-    headers = {"User-Agent": "bike-etl/1.0 (local project script)"}
+    headers = {"User-Agent": "bike-etl"}
 
     address = None
     for attempt in range(1, max_retries + 1):

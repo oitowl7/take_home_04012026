@@ -3,6 +3,7 @@
 This project pulls Lime bike status data for Washington, DC, transforms it, and writes it to PostgreSQL.
 
 It supports:
+
 - repeated polling (`--iterations`, `--interval-seconds`)
 - change-only inserts (new or changed bikes only)
 - optional address enrichment via Nominatim (`--enrich-address`)
@@ -26,7 +27,7 @@ pip install -r requirements.txt
 
 ## 3) Create PostgreSQL role + database (from scratch)
 
-If nothing exists yet, run this in DBeaver SQL editor (connected as postgres/admin) or in `psql`:
+If nothing exists yet, run the SQL below in **any** PostgreSQL client you prefer: `psql`, DBeaver, pgAdmin, VS Code/Cursor SQL extensions, IntelliJ, etc. Connect as a user that can create roles and databases (often `postgres`).
 
 ```sql
 -- Create application role
@@ -39,7 +40,7 @@ CREATE DATABASE bikes OWNER etl_user;
 GRANT ALL PRIVILEGES ON DATABASE bikes TO etl_user;
 ```
 
-Then connect to the `bikes` database and run:
+Then connect to the `bikes` database (same tools as above) and run:
 
 ```sql
 CREATE TABLE IF NOT EXISTS public.bike_status (
@@ -110,21 +111,25 @@ python main.py --enrich-address --iterations 1 --max-rows 50 --geocode-qps 1.0
 
 ## 7) Notes on geocoding / 429 responses
 
+**Scale:** The Lime feed returns **well over 7,000** bike records per snapshot. If you reverse-geocode **one coordinate per second** (a reasonable public Nominatim pace), processing **7,000** distinct lookups takes about **7,000 seconds** — roughly **2 hours**. In practice this codebase deduplicates identical `(lat, lon)` pairs (often ~6k unique pairs instead of ~7k rows), but you are still looking at **hours** of wall-clock time if you run enrichment across the full feed at ~1 req/s.
+
 Public Nominatim is rate-limited. This project already:
+
 - deduplicates coordinates per cycle
 - caches geocode results in-memory
 - rate-limits geocoder calls
 - retries on 429 using `Retry-After` when present
 
 If you still hit `429 Too Many Requests`:
+
 - reduce `--geocode-qps` (for example `0.5` or `0.2`)
 - lower `--max-rows` during testing
-- consider a paid/batch provider or self-hosted Nominatim for heavy loads
 
 Recommendation for this freeware test setup:
+
 - do not run geolocation enrichment on the full dataset
 - use a small cap like `--max-rows 10` with `--enrich-address` to avoid rate limiting
-- example: `python main.py --enrich-address --max-rows 10 --geocode-qps 0.5 --iterations 1`
+- example: `python main.py --enrich-address --max-rows 10 --iterations 1`
 
 ## 8) Project layout
 
@@ -134,3 +139,4 @@ Recommendation for this freeware test setup:
 - `geocode.py` geocoding, throttling, retries
 - `load.py` load + change detection + insert error handling
 - `config.py` config and SQLAlchemy engine
+
