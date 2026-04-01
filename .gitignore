@@ -1,0 +1,27 @@
+# Repo root: applies to bikes/, travel/, and any future subfolders.
+
+# Python (any depth)
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+**/venv/
+.venv/
+**/env/
+
+# Secrets / local env
+.env
+.env.*
+
+# IDE / editor
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Large local sample data (Lime GBFS dump); remove this line to track it
+bikes/api.json
