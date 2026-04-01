@@ -3,6 +3,9 @@ CLI entrypoint: orchestrates Extract → Transform → Load in a loop.
 
 Each iteration is one "cycle": fetch Lime GBFS JSON, normalize to a DataFrame,
 optionally enrich addresses, then insert only new/changed bikes into Postgres.
+
+Production would usually run a single ETL pass per schedule tick via an orchestrator
+(Airflow, Dagster, etc.) instead of this in-process iteration/sleep pattern.
 """
 import argparse
 import logging
@@ -35,6 +38,7 @@ def run(
     # Mutable float in a list so reverse_geocode can update "last request time" in place.
     last_geocode_request_at = [0.0]
 
+    # Local/demo: repeat ETL in-process. Production would usually call one cycle per Airflow (etc.) tick.
     for cycle in range(1, iterations + 1):
         logger.info("Cycle %s/%s started.", cycle, iterations)
         try:

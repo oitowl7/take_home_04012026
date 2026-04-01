@@ -4,12 +4,14 @@ This project pulls Lime bike status data for Washington, DC, transforms it, and 
 
 It supports:
 
-- repeated polling (`--iterations`, `--interval-seconds`)
+- repeated polling (`--iterations`, `--interval-seconds`) — a simple stand-in for a scheduler (see below)
 - change-only inserts (new or changed bikes only)
 - optional address enrichment via Nominatim (`--enrich-address`)
 - test-mode row limiting (`--max-rows`)
 
 **Data model:** The loader **append**s new rows when a bike’s tracked fields change, so `bike_status` keeps a **history** of snapshots over time (analytics / warehouse–style). I’m aware of the alternative: for a **transactional / operational / app backend** where you only need **current** state per bike, you would typically **`UPDATE` or `UPSERT`** one row per `bike_id` instead of inserting new history rows. This project chooses the historical pattern on purpose.
+
+**Scheduling:** In production, this pipeline would more likely be triggered on a **cron-like schedule** by an orchestration tool (**Airflow**, Dagster, Prefect, cloud schedulers, etc.) — one run per schedule tick — rather than a long-lived process looping on `--iterations` / `--interval-seconds`. That in-process loop is here for local demos and tests; wiring Airflow (or equivalent) was out of scope for the time available.
 
 ## 1) Prerequisites
 
